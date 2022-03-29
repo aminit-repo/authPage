@@ -1,0 +1,269 @@
+		===configuring typescript with jquery using @types===
+
+
+install the following depencies, [typescript, ts-loader, jquery, webpack]
+
+
+*	Create project folder >> mkdir ProjectName
+
+*	Create a node project, by initilizing the root folder >> npm init
+
+*	install typescript and ts-loader as a developer dependency (--save-dev)    >> npm install --save-dev typescript ts-loader 
+
+* 	make the project a typescript project also, so you could obtain the tsconfig.json file   >>tsc --init
+
+* 	create a folder to house your typescript files/ for readability purpose    >>mkdir src or mkddir ts-src
+
+* 	create your typescript files >> type null > fileName | >>type null > app.ts
+
+*	configure the tsconfig.json file to have the files that should be executed, Neccessarily the base file
+	
+
+	add		 "files": [
+    					 "ts-src/app.ts" //this is the root to the base file that should be executed by typescript compiler
+ 				  ]
+
+*	install jquery as project dependency (--save) to the node project   >> npm install --save jquery
+
+*	install the jquery typescript types declearations  >> npm install --save-dev @types/jquery
+
+*	install webpack as developer dependency (--save-dev) to the node project >>npm install --save-dev webpack 
+
+*   	create a webpack.config.js file for configuration of our package builder (webpack)   >> type null > webpack.config.js
+
+*	past the basic webpack.config.js configuration file 
+
+		
+const path = require('path');
+module.exports = {
+  entry: './ts-src/app.ts', //this is the path to the base typescript file 
+					called the entry point to your project, by default,
+					 it has the path './src/index.ts' you could change if 
+					your base path is different 
+	
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+  },
+};
+
+
+
+*	execute webpack with the command >>node_modules\.bin\webpack 
+
+* 	create your html file at the root directory >> type null > index.html
+
+*	add your output file of webpack bundler to your html file with the script tag 
+	<script src="./dist/bundle.js"></script>
+
+
+==============  Using Multiple Entry Point ============
+Multiple Entry points enable the seperation between vendor files and the program files.
+
+* 	Create a new file called vendor.js and import the vendors
+	    import 'bootstrap'
+
+* 	Update the entry variable in  webpack.config.js file with 
+
+	entry: {
+		main: './ts-src/app.ts',
+		vendor: './ts-src/vendor.js'
+	}
+	
+	and also 
+	
+	output: {
+    		filename: '[name].js',
+    		path: path.resolve(__dirname, 'dist'),
+ 	 }
+
+	
+
+========== WORKING CSS==========
+
+*		install style-loader used for injecting JS into the DOM, install also css-loader for converting CSS into JS
+		>> npm install --save-dev css-loader style-loader
+ 
+*		Update the webpack.config.js file
+		
+		modules: {
+			rules: [
+					{
+        					test: /\.tsx?$/,
+        					use: 'ts-loader',
+        					exclude: /node_modules/,
+      				},
+					
+				 	{
+        					test: /\css?$/,
+        					use: ['style-loader', 'css-loader'],
+      				}
+			]
+		}
+
+
+======WORKING WITH SCSS OR SASS =======
+
+*	install the sass-loader
+	>>npm install sass-loader sass webpack --save-dev
+
+
+*	update the webpack.config.js file 
+
+ module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+
+      {
+        test: /\css?$/,
+        use: ['style-loader', 'css-loader'],
+      },
+
+      {
+        test: /\.s[ac]ss$/i,
+        use: [
+          // Creates `style` nodes from JS strings
+          "style-loader",
+          // Translates CSS into CommonJS
+          "css-loader",
+          // Compiles Sass to CSS
+          "sass-loader",
+        ],
+      },
+
+    ],
+  }
+
+
+*		inport your scss script or your css script in the webpack entry index.ts script
+		import 'style/index.scss'
+
+
+
+============SEPERATING STYLES AND SCRIPT IN DIFFERENT FILES ============
+
+*		install the plugin  mini-css-extract plugin
+		>> npm install --save-dev mini-css-extract-plugin
+
+*		require this module in the webpack.config.js file
+		>> const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+
+* 		Add the plugin attribute in the webpack.config.js file and create a new object of MiniCssExtractPlugin
+
+		plugins: [
+    			new MiniCssExtractPlugin({
+      			// Options similar to the same options in webpackOptions.output
+      			filename: "[name].css"
+     			 })]
+		
+
+* 		Update webpack.config.js file by replacing the style loader with minicssExtractplugin.loader
+	
+
+
+
+const path = require('path');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+module.exports = {
+  entry: {
+   main: './src/index.ts',
+   vendor: './src/vendor.js'
+  },
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+
+      {
+        test: /\css?$/,
+        use: ['style-loader', 'css-loader'],
+      },
+
+      {
+        test: /\.s[ac]ss$/i,
+        use: [
+          // Extract css from the js file into a css file
+          MiniCssExtractPlugin.loader,
+          // Translates CSS into CommonJS
+          "css-loader",
+          // Compiles Sass to CSS
+          "sass-loader",
+        ],
+      },
+
+    ],
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
+  output: {
+    filename: '[name].js',
+    path: path.resolve(__dirname, 'dist'),
+  },
+  plugins: [
+    new MiniCssExtractPlugin({
+      // Options similar to the same options in webpackOptions.output
+      // both options are optional
+      filename: "[name].css"
+      })]
+};
+
+
+
+		=========Minifying CSS/ JS/ HTML =========
+	There plugins used for minifying HTML, CSS AND JS. building in production mode, automatically minify CSS and JS.
+
+
+	Plugins like OptimizedCssAssetsPlugin are used for minifying CSS files, TerserPlugin for JS and HtmlWebpackPlugin for HTML
+
+
+* 	For HTML minifying, install HtmlWepackPlugin 
+	>>npm install --save-dev html-webpack-plugin
+
+*	require the plugin in webpack.config.js file
+	const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+
+*	Add the plugin in the list of plugins
+	plugins: [
+    new MiniCssExtractPlugin({
+      // Options similar to the same options in webpackOptions.output
+      // both options are optional
+      filename: "[name].css"
+      }), new HtmlWebpackPlugin()]
+
+
+
+
+			========== Building project with node engine ========
+
+* 		update package.json file with 
+
+ "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  }
+
+
+*		To build project, use 
+		>> npm run build instead of node_modules\.bin\webpack
+ 
